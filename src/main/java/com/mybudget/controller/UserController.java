@@ -1,8 +1,6 @@
 package com.mybudget.controller;
 
-import com.mybudget.dto.UserOtpGenerationRequestDto;
-import com.mybudget.dto.UserOtpVerificationRequestDto;
-import com.mybudget.dto.UserSignUpRequestDto;
+import com.mybudget.dto.*;
 import com.mybudget.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -61,4 +59,13 @@ public class UserController {
         return userService.verifyEmail(userId);
     }
 
+    @PostMapping("/sign-in")
+    @ApiOperation(value = "사용자 로그인", notes = "사용자 로그인")
+    public ResponseEntity<UserSignInResponseDto> signIn(
+            @Valid @RequestBody UserSignInRequestDto userSignInRequestDto) {
+
+        UserSignInDto userSignInDto = userService.signIn(userSignInRequestDto);
+
+        return ResponseEntity.status(OK).body(UserSignInResponseDto.from(userSignInDto));
+    }
 }
