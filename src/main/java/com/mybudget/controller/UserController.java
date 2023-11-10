@@ -1,6 +1,7 @@
 package com.mybudget.controller;
 
 import com.mybudget.dto.UserOtpGenerationRequestDto;
+import com.mybudget.dto.UserOtpVerificationRequestDto;
 import com.mybudget.dto.UserSignUpRequestDto;
 import com.mybudget.service.UserService;
 import io.swagger.annotations.Api;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 
-import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.*;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
@@ -33,6 +34,16 @@ public class UserController {
         userService.sendOtp(userOtpGenerationRequestDto);
 
         return ResponseEntity.status(CREATED).build();
+    }
+
+    @PostMapping("/otp/verification")
+    @ApiOperation(value = "OTP 인증", notes = "OTP를 입력하여 휴대전화 인증")
+    public ResponseEntity<Void> verifyOtp(
+            @Valid @RequestBody UserOtpVerificationRequestDto userOtpVerificationRequestDto) {
+
+        userService.verifyOtp(userOtpVerificationRequestDto);
+
+        return ResponseEntity.status(OK).build();
     }
 
     @PostMapping
