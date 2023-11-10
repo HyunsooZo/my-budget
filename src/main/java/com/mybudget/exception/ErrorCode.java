@@ -14,7 +14,13 @@ public enum ErrorCode {
     //undefined
     UNDEFINED_EXCEPTION(BAD_REQUEST, "알 수 없는 오류입니다."),
     //user
-    USER_INFO_NOT_FOUND(NOT_FOUND, "사용자 정보를 찾을 수 없습니다.");
+    USER_INFO_NOT_FOUND(NOT_FOUND, "사용자 정보를 찾을 수 없습니다."),
+    EXISTING_USER(BAD_REQUEST, "이미 가입한 사용자 입니다."),
+    INVALID_OTP(BAD_REQUEST, "유효하지 않은 인증번호 입니다."),
+    INVALID_PASSWORD(BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
+    //budget
+    BUDGET_AMOUNT_NOT_MATCH(BAD_REQUEST, "예산의 총액과 각 예산의 총액이 일치하지 않습니다."),
+    BUDGET_HASNT_BEEN_SET(BAD_REQUEST,"예산이 설정 되지 않은 사용자 입니다." );
 
     private final HttpStatus status;
     private final String message;
