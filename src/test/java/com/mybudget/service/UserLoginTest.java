@@ -5,11 +5,13 @@ import com.mybudget.component.SmsSender;
 import com.mybudget.config.JwtProvider;
 import com.mybudget.config.UserRole;
 import com.mybudget.domain.User;
-import com.mybudget.dto.UserSignUpRequestDto;
+import com.mybudget.dto.UserSignInDto;
+import com.mybudget.dto.UserSignInRequestDto;
 import com.mybudget.enums.UserStatus;
 import com.mybudget.exception.CustomException;
 import com.mybudget.repository.TokenRedisRepository;
 import com.mybudget.repository.UserRepository;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,11 +22,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
+import static com.mybudget.exception.ErrorCode.INVALID_PASSWORD;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
-@DisplayName("회원가입 테스트")
-class UserSignUpTest {
+@DisplayName("사용자 로그인 테스트")
+class UserLoginTest {
     @Mock
     private UserRepository userRepository;
 
@@ -48,8 +51,8 @@ class UserSignUpTest {
 
     private UserService userService;
 
-    public static UserSignUpRequestDto requestDto = new UserSignUpRequestDto(
-            "email@test.com", "12341233", "조현수", "01099998888");
+    public static UserSignInRequestDto userSignInRequestDto =
+            new UserSignInRequestDto("email@test.com", "12341233");
     public static User user = User.builder()
             .id(1L)
             .email("email@test.com")
@@ -75,39 +78,36 @@ class UserSignUpTest {
     }
 
     @Test
-    @DisplayName("성공")
-    public void signUp_Successful() {
-        // Given
+    @DisplayName("실패 - 비밀번호 오류")
+    public void testSignIn_InvalidPassword() {
+        UserSignInRequestDto requestDto = new UserSignInRequestDto("test@example.com", "wrong_password");
+
         when(userRepository.findByEmail(requestDto.getEmail()))
-                .thenReturn(Optional.empty());
-        when(passwordEncoder.encode(requestDto.getPassword()))
-                .thenReturn("encodedPassword");
-        when(userRepository.save(any()))
-                .thenReturn(user);
+                .thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(requestDto.getPassword(), user.getPassword()))
+                .thenReturn(false);
 
-        // When
-        userService.signUp(requestDto);
-
-        // Then
-        verify(userRepository, times(1)).findByEmail("email@test.com");
-        verify(passwordEncoder, times(1)).encode("12341233");
-        verify(userRepository, times(1)).save(any());
-        verify(emailSender, times(1)).sendEmail(any(), any(), any());
+        assertThatThrownBy(() -> userService.signIn(requestDto))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(INVALID_PASSWORD.getMessage());
     }
 
     @Test
-    @DisplayName("실패 - 이미 가입된 사용자")
-    public void signUp_ExistingUser() {
-        // Given
-        when(userRepository.findByEmail(any())).thenReturn(Optional.of(user));
+    @DisplayName("성공")
+    public void testSignIn_ValidUser() {
+        //given
+        UserSignInRequestDto requestDto =
+                new UserSignInRequestDto("test@example.com", "correct_password");
 
-        // When/Then
-        assertThatThrownBy(() -> userService.signUp(requestDto))
-                .isInstanceOf(CustomException.class)
-                .hasMessage("이미 가입한 사용자 입니다.");
+        when(userRepository.findByEmail(requestDto.getEmail()))
+                .thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(requestDto.getPassword(), user.getPassword()))
+                .thenReturn(true);
 
-        // Verify
-        verify(userRepository, times(1))
-                .findByEmail("email@test.com");
+        //when
+        UserSignInDto signInDto = userService.signIn(requestDto);
+
+        //then
+        Assertions.assertThat(signInDto.getUserId()).isEqualTo(user.getId());
     }
 }
