@@ -52,6 +52,9 @@ dependencies {
     //query-dsl
     implementation "com.querydsl:querydsl-jpa:${queryDslVersion}"
     implementation "com.querydsl:querydsl-apt:${queryDslVersion}"
+    //httpclient
+    implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+
 }
 
 def querydslSrcDir = 'src/main/generated'
