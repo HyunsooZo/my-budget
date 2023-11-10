@@ -2,14 +2,12 @@ package com.mybudget.service;
 
 import com.mybudget.component.EmailSender;
 import com.mybudget.component.SmsSender;
+import com.mybudget.config.JwtProvider;
 import com.mybudget.domain.User;
-import com.mybudget.dto.SmsComponentDto;
-import com.mybudget.dto.UserOtpGenerationRequestDto;
-import com.mybudget.dto.UserOtpVerificationRequestDto;
-import com.mybudget.dto.UserSignUpRequestDto;
+import com.mybudget.dto.*;
 import com.mybudget.enums.UserStatus;
-import com.mybudget.enums.VerificationMessages;
 import com.mybudget.exception.CustomException;
+import com.mybudget.repository.TokenRedisRepository;
 import com.mybudget.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +36,10 @@ public class UserService {
     private final StringRedisTemplate redisTemplate;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final JwtProvider jwtProvider;
+    private final TokenRedisRepository tokenRedisRepository;
     private static final String OTP_KEY = "OTP: ";
+    private static final String TOKEN_KEY = "TOKEN: ";
 
     /**
      * 사용자에게 OTP를 생성하고 전송
@@ -165,6 +166,26 @@ public class UserService {
      */
     private User getUser(Long userId) {
         return userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_INFO_NOT_FOUND));
+    }
+
+    public UserSignInDto signIn(UserSignInRequestDto userSignInRequestDto) {
+        User user = getUserByEmail(userSignInRequestDto.getEmail());
+
+        if (!passwordEncoder.matches(userSignInRequestDto.getPassword(), user.getPassword())) {
+            throw new CustomException(INVALID_PASSWORD);
+        }
+
+        String accessToken = jwtProvider.issueAccessToken(TokenIssuanceDto.from(user));
+        String refreshToken = jwtProvider.issueRefreshToken();
+
+        tokenRedisRepository.save(TOKEN_KEY + user.getId().toString(), refreshToken);
+
+        return UserSignInDto.from(user, accessToken, refreshToken);
+    }
+
+    private User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(USER_INFO_NOT_FOUND));
     }
 }
