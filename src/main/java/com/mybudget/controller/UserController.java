@@ -8,14 +8,12 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
-import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
@@ -54,6 +52,13 @@ public class UserController {
         userService.signUp(userSignUpRequestDto);
 
         return ResponseEntity.status(CREATED).build();
+    }
+
+    @GetMapping("/{userId}/verification")
+    @ApiOperation(value = "사용자 이메일 인증", notes = "사용자 이메일 인증(이메일로 전송된 링크)")
+    public String verifyEmail(@PathVariable Long userId) {
+
+        return userService.verifyEmail(userId);
     }
 
 }

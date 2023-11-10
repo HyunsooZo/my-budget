@@ -7,6 +7,8 @@ import com.mybudget.dto.SmsComponentDto;
 import com.mybudget.dto.UserOtpGenerationRequestDto;
 import com.mybudget.dto.UserOtpVerificationRequestDto;
 import com.mybudget.dto.UserSignUpRequestDto;
+import com.mybudget.enums.UserStatus;
+import com.mybudget.enums.VerificationMessages;
 import com.mybudget.exception.CustomException;
 import com.mybudget.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +24,10 @@ import java.util.concurrent.TimeUnit;
 import static com.mybudget.enums.MailTexts.VERIFICATION_SUBJECT;
 import static com.mybudget.enums.MailTexts.VERIFICATION_TEXT;
 import static com.mybudget.enums.SmsTexts.OTP_TEXT;
-import static com.mybudget.exception.ErrorCode.EXISTING_USER;
-import static com.mybudget.exception.ErrorCode.INVALID_OTP;
+import static com.mybudget.enums.UserStatus.ACTIVE;
+import static com.mybudget.enums.UserStatus.DELETED;
+import static com.mybudget.enums.VerificationMessages.*;
+import static com.mybudget.exception.ErrorCode.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -126,5 +130,41 @@ public class UserService {
 
         // OTP가 일치하면 Redis에서 해당 전화번호의 OTP를 삭제
         redisTemplate.delete(OTP_KEY + phoneNumber);
+    }
+
+    /**
+     * 사용자의 이메일을 인증하는 메서드
+     *
+     * @param userId 사용자의 고유 식별자
+     * @return 이메일 인증 완료 메시지
+     * @throws CustomException 사용자 정보를 찾을 수 없을 때 발생하는 예외
+     */
+    @Transactional
+    public String verifyEmail(Long userId) {
+        User user = getUser(userId);
+        UserStatus userStatus = user.getUserStatus();
+
+        if (userStatus.equals(ACTIVE)) {
+            return ALREADY_VERIFIED + GO_TO_LOGIN;
+        }
+
+        if (userStatus.equals(DELETED)) {
+            return DELETED_USER;
+        }
+
+        user.setUserStatus(ACTIVE);
+        return VERIFIED + GO_TO_LOGIN;
+    }
+
+    /**
+     * 사용자 정보를 조회하는 내부 메서드
+     *
+     * @param userId 사용자의 고유 식별자
+     * @return 주어진 식별자에 해당하는 사용자 정보
+     * @throws CustomException 사용자 정보를 찾을 수 없을 때 발생하는 예외
+     */
+    private User getUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(USER_INFO_NOT_FOUND));
     }
 }
