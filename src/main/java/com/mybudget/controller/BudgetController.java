@@ -90,4 +90,17 @@ public class BudgetController {
 
         return ResponseEntity.status(OK).body(BudgetSettingResponseDto.from(result));
     }
+
+    @DeleteMapping("/{budgetId}")
+    @ApiOperation(value = "예산 설정 삭제", notes = "사용자 본인의 예산 설정 삭제")
+    public ResponseEntity<Void> deleteBudget(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
+            @PathVariable Long budgetId) {
+
+        Long userId = jwtProvider.getIdFromToken(token);
+
+        budgetService.deleteBudget(userId, budgetId);
+
+        return ResponseEntity.status(NO_CONTENT).build();
+    }
 }
