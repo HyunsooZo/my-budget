@@ -2,7 +2,10 @@ package com.mybudget.service;
 
 import com.mybudget.domain.Budget;
 import com.mybudget.domain.CategoryRatio;
+import com.mybudget.dto.BudgetDto;
 import com.mybudget.enums.Categories;
+import com.mybudget.exception.CustomException;
+import com.mybudget.exception.ErrorCode;
 import com.mybudget.repository.BudgetRepository;
 import com.mybudget.repository.CategoryRatioRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +17,7 @@ import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -58,5 +62,33 @@ public class BudgetRecommendationService {
                                 .build());
             }
         });
+    }
+
+    /**
+     * 추천 예산 목록을 생성. 주어진 총 금액을 기반으로 각 카테고리에 추천되는 예산을 생성해 반환.
+     *
+     * @param amount 총 예산 금액
+     * @return 추천 예산 목록 (각 카테고리별 추천 예산 리스트)
+     * @throws CustomException 주어진 금액이 너무 적을 때 발생하는 예외
+     */
+    public List<BudgetDto> getRecommendationBudgets(Long amount) {
+        if (amount < 1000) {
+            throw new CustomException(ErrorCode.BUDGET_AMOUNT_TOO_SMALL);
+        }
+
+        List<CategoryRatio> categoryRatios = categoryRatioRepository.findAll();
+
+        return categoryRatios.stream()
+                .map(categoryRatio -> {
+                    BigDecimal budgetAmount = BigDecimal.valueOf(amount)
+                            .multiply(BigDecimal.valueOf(categoryRatio.getRatio()))
+                            .setScale(0, RoundingMode.HALF_UP);
+
+                    return BudgetDto.builder()
+                            .category(categoryRatio.getCategory())
+                            .amount(budgetAmount)
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }
