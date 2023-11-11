@@ -6,8 +6,8 @@ import com.mybudget.dto.BudgetEditRequestDto;
 import com.mybudget.dto.BudgetSettingRequestDto;
 import com.mybudget.dto.BudgetSettingResponseDto;
 import com.mybudget.enums.Categories;
-import com.mybudget.service.BudgetManagementService;
-import com.mybudget.service.BudgetSettingService;
+import com.mybudget.service.BudgetRecommendationService;
+import com.mybudget.service.BudgetService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +26,8 @@ import static org.springframework.http.HttpStatus.*;
 @RestController
 public class BudgetController {
 
-    private final BudgetSettingService budgetSettingService;
-    private final BudgetManagementService budgetManagementService;
+    private final BudgetService budgetService;
+    private final BudgetRecommendationService budgetRecommendationService;
     private final JwtProvider jwtProvider;
 
     @GetMapping("/categories")
@@ -35,7 +35,7 @@ public class BudgetController {
     public ResponseEntity<List<Categories>> getCategories(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
 
-        List<Categories> result = budgetSettingService.getCategories();
+        List<Categories> result = budgetService.getCategories();
 
         return ResponseEntity.status(OK).body(result);
     }
@@ -48,7 +48,7 @@ public class BudgetController {
 
         Long userId = jwtProvider.getIdFromToken(token);
 
-        budgetSettingService.createBudget(userId, budgetSettingRequestDto);
+        budgetService.createBudget(userId, budgetSettingRequestDto);
 
         return ResponseEntity.status(CREATED).build();
     }
@@ -60,7 +60,7 @@ public class BudgetController {
 
         Long userId = jwtProvider.getIdFromToken(token);
 
-        List<BudgetDto> result = budgetManagementService.getMyBudgets(userId);
+        List<BudgetDto> result = budgetService.getMyBudgets(userId);
 
         return ResponseEntity.status(OK).body(BudgetSettingResponseDto.from(result));
     }
@@ -74,8 +74,20 @@ public class BudgetController {
 
         Long userId = jwtProvider.getIdFromToken(token);
 
-        budgetManagementService.editBudget(userId, budgetId, budgetEditRequestDto);
+        budgetService.editBudget(userId, budgetId, budgetEditRequestDto);
 
         return ResponseEntity.status(NO_CONTENT).build();
+    }
+
+    @GetMapping("/recommendation/amount/{amount}")
+    @ApiOperation(value = "예산 추천", notes = "사용자 본인의 예산 설정을 추천")
+    public ResponseEntity<BudgetSettingResponseDto> getRecommendationBudgets(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
+            @PathVariable Long amount) {
+
+        List<BudgetDto> result =
+                budgetRecommendationService.getRecommendationBudgets(amount);
+
+        return ResponseEntity.status(OK).body(BudgetSettingResponseDto.from(result));
     }
 }
