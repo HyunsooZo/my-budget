@@ -21,7 +21,4 @@ public class CategoryRatio extends BaseEntity {
 
     @Setter
     private Double ratio;
-
-    @Setter
-    private Integer count;
 }
