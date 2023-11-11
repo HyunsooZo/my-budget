@@ -20,7 +20,9 @@ public enum ErrorCode {
     INVALID_PASSWORD(BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
     //budget
     BUDGET_AMOUNT_NOT_MATCH(BAD_REQUEST, "예산의 총액과 각 예산의 총액이 일치하지 않습니다."),
-    BUDGET_HASNT_BEEN_SET(BAD_REQUEST,"예산이 설정 되지 않은 사용자 입니다." );
+    BUDGET_HASNT_BEEN_SET(BAD_REQUEST, "예산이 설정 되지 않은 사용자 입니다."),
+    BUDGET_NOT_FOUND(NOT_FOUND, "예산 정보를 찾을 수 없습니다."),
+    NOT_MY_BUDGET(BAD_REQUEST, "본인의 예산만 수정/삭제할 수 있습니다.");
 
     private final HttpStatus status;
     private final String message;

@@ -12,11 +12,13 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @Builder
 public class BudgetDto {
+    private Long id;
     private Categories category;
     private BigDecimal amount;
 
     public static BudgetDto from(Budget budget) {
         return BudgetDto.builder()
+                .id(budget.getId())
                 .category(budget.getCategory())
                 .amount(budget.getAmount())
                 .build();

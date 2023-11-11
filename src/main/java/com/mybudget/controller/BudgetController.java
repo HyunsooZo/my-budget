@@ -1,8 +1,12 @@
 package com.mybudget.controller;
 
 import com.mybudget.config.JwtProvider;
+import com.mybudget.dto.BudgetDto;
+import com.mybudget.dto.BudgetEditRequestDto;
 import com.mybudget.dto.BudgetSettingRequestDto;
+import com.mybudget.dto.BudgetSettingResponseDto;
 import com.mybudget.enums.Categories;
+import com.mybudget.service.BudgetManagementService;
 import com.mybudget.service.BudgetSettingService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -14,8 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.List;
 
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.*;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/budgets")
@@ -24,6 +27,7 @@ import static org.springframework.http.HttpStatus.OK;
 public class BudgetController {
 
     private final BudgetSettingService budgetSettingService;
+    private final BudgetManagementService budgetManagementService;
     private final JwtProvider jwtProvider;
 
     @GetMapping("/categories")
@@ -40,12 +44,38 @@ public class BudgetController {
     @ApiOperation(value = "예산 설정", notes = "사용자 본인의 예산을 설정")
     public ResponseEntity<Void> createBudget(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
-            @Valid @RequestBody BudgetSettingRequestDto budgetSettingRequestDto){
+            @Valid @RequestBody BudgetSettingRequestDto budgetSettingRequestDto) {
 
         Long userId = jwtProvider.getIdFromToken(token);
 
         budgetSettingService.createBudget(userId, budgetSettingRequestDto);
 
         return ResponseEntity.status(CREATED).build();
+    }
+
+    @GetMapping
+    @ApiOperation(value = "예산 설정 조회", notes = "사용자 본인의 예산 설정 조회")
+    public ResponseEntity<BudgetSettingResponseDto> getMyBudgets(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+
+        Long userId = jwtProvider.getIdFromToken(token);
+
+        List<BudgetDto> result = budgetManagementService.getMyBudgets(userId);
+
+        return ResponseEntity.status(OK).body(BudgetSettingResponseDto.from(result));
+    }
+
+    @PatchMapping("/{budgetId}")
+    @ApiOperation(value = "예산 설정 수정", notes = "사용자 본인의 예산 설정 수정")
+    public ResponseEntity<Void> editBudget(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
+            @PathVariable Long budgetId,
+            @Valid @RequestBody BudgetEditRequestDto budgetEditRequestDto) {
+
+        Long userId = jwtProvider.getIdFromToken(token);
+
+        budgetManagementService.editBudget(userId, budgetId, budgetEditRequestDto);
+
+        return ResponseEntity.status(NO_CONTENT).build();
     }
 }
