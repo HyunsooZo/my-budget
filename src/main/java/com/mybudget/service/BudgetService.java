@@ -87,17 +87,55 @@ public class BudgetService {
                 .orElseThrow(() -> new CustomException(USER_INFO_NOT_FOUND));
     }
 
+    /**
+     * 예산 수정
+     *
+     * @param userId               사용자 ID
+     * @param budgetId             수정할 예산 ID
+     * @param budgetEditRequestDto 수정할 예산 정보를 담은 DTO
+     * @throws CustomException 예산이 찾아지지 않을 경우 예외 발생
+     */
     @Transactional
     public void editBudget(Long userId, Long budgetId, BudgetEditRequestDto budgetEditRequestDto) {
         User user = getUser(userId);
 
-        Budget budget = budgetRepository.findById(budgetId)
-                .orElseThrow(() -> new CustomException(ErrorCode.BUDGET_NOT_FOUND));
+        Budget budget = getBudget(budgetId);
 
         if (!budget.getUser().equals(user)) {
             throw new CustomException(ErrorCode.NOT_MY_BUDGET);
         }
 
         budget.setAmount(budgetEditRequestDto.getAmount());
+    }
+
+    /**
+     * 예산 삭제
+     *
+     * @param userId   사용자 ID
+     * @param budgetId 삭제할 예산 ID
+     * @throws CustomException 예산이 찾아지지 않을 경우 예외 발생
+     */
+    public void deleteBudget(Long userId, Long budgetId) {
+        User user = getUser(userId);
+
+        Budget budget = getBudget(budgetId);
+
+        if (!budget.getUser().equals(user)) {
+            throw new CustomException(ErrorCode.NOT_MY_BUDGET);
+        }
+
+        budgetRepository.delete(budget);
+    }
+
+    /**
+     * 특정 예산을 조회
+     *
+     * @param budgetId 가져올 예산 ID
+     * @return 주어진 ID에 해당하는 예산
+     * @throws CustomException 예산이 찾아지지 않을 경우 예외 발생
+     */
+    private Budget getBudget(Long budgetId) {
+        return budgetRepository.findById(budgetId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BUDGET_NOT_FOUND));
     }
 }
