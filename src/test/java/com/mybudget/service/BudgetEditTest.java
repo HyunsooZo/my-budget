@@ -32,12 +32,12 @@ class BudgetEditTest {
     @Mock
     private BudgetRepository budgetRepository;
 
-    private BudgetManagementService budgetManagementService;
+    private BudgetService budgetService;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        budgetManagementService = new BudgetManagementService(
+        budgetService = new BudgetService(
                 userRepository, budgetRepository
         );
     }
@@ -78,7 +78,7 @@ class BudgetEditTest {
         when(budgetRepository.findById(1L)).thenReturn(Optional.of(budget));
 
         //when
-        budgetManagementService.editBudget(1L, 1L, budgetEditRequestDto);
+        budgetService.editBudget(1L, 1L, budgetEditRequestDto);
 
         //then
         assertThat(budget.getAmount()).isEqualTo(BigDecimal.valueOf(99));
@@ -93,7 +93,7 @@ class BudgetEditTest {
 
         //when&then
         assertThatThrownBy(() ->
-                budgetManagementService.editBudget(1L, 1L, budgetEditRequestDto))
+                budgetService.editBudget(1L, 1L, budgetEditRequestDto))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(BUDGET_NOT_FOUND.getMessage());
 
@@ -108,7 +108,7 @@ class BudgetEditTest {
 
         //when&then
         assertThatThrownBy(() ->
-                budgetManagementService.editBudget(1L, 1L, budgetEditRequestDto))
+                budgetService.editBudget(1L, 1L, budgetEditRequestDto))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.NOT_MY_BUDGET.getMessage());
     }
