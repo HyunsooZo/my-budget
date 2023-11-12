@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,21 +43,52 @@ public class BudgetService {
      * @throws CustomException 유저 정보가 없을 때 발생하는 예외
      */
     @Transactional
-    public void createBudget(Long userId, BudgetSettingRequestDto budgetSettingRequestDto) {
+    public void createBudget(Long userId,
+                             BudgetSettingRequestDto budgetSettingRequestDto) {
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(USER_INFO_NOT_FOUND));
 
         List<BudgetDto> budgetDtos = budgetSettingRequestDto.getBudgets();
 
         budgetDtos.forEach(budgetDto -> {
+            LocalDate newBudgetStart = dateToLocalDate(budgetDto.getStartDate());
+            LocalDate newBudgetEnd = dateToLocalDate(budgetDto.getEndDate());
 
-            budgetRepository.findByUserAndCategory(user, budgetDto.getCategory())
-                    .ifPresent(budget -> {
-                        throw new CustomException(ErrorCode.BUDGET_ALREADY_EXISTS);
-                    });
+            if (newBudgetStart.isAfter(newBudgetEnd)) {
+                throw new CustomException(ErrorCode.INVALID_BUDGET_DATE);
+            }
+
+            List<Budget> existingBudgets = budgetRepository.findByUserAndCategory(
+                    user, budgetDto.getCategory()
+            );
+
+            existingBudgets.forEach(existingBudget -> {
+                LocalDate existingBudgetStart =
+                        dateToLocalDate(existingBudget.getStartDate());
+                LocalDate existingBudgetEnd =
+                        dateToLocalDate(existingBudget.getEndDate());
+
+                if ((newBudgetStart.isBefore(existingBudgetEnd) ||
+                        newBudgetStart.isEqual(existingBudgetEnd)) &&
+                        (newBudgetEnd.isAfter(existingBudgetStart) ||
+                                newBudgetEnd.isEqual(existingBudgetStart))) {
+                    throw new CustomException(ErrorCode.BUDGET_ALREADY_EXISTS);
+                }
+            });
 
             budgetRepository.save(Budget.from(user, budgetDto));
         });
+    }
+
+    /**
+     * Date를 LocalDate로 변환하는 메서드
+     *
+     * @param date 변환할 Date
+     * @return 변환된 LocalDate
+     */
+    private LocalDate dateToLocalDate(Date date) {
+        return date.toLocalDate();
     }
 
     /**
