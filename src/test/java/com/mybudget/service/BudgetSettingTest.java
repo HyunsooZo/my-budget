@@ -19,6 +19,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.util.*;
 
 import static com.mybudget.enums.Categories.*;
@@ -46,18 +47,26 @@ class BudgetSettingTest {
             BudgetDto.builder()
                     .category(FOOD)
                     .amount(BigDecimal.valueOf(100000))
+                    .startDate(new Date(2023, 1, 1))
+                    .endDate(new Date(2023, 2, 1))
                     .build(),
             BudgetDto.builder()
                     .category(OTHER)
                     .amount(BigDecimal.valueOf(200000))
+                    .startDate(new Date(2023, 1, 1))
+                    .endDate(new Date(2023, 2, 1))
                     .build(),
             BudgetDto.builder()
                     .category(HOUSING)
                     .amount(BigDecimal.valueOf(300000))
+                    .startDate(new Date(2023, 1, 1))
+                    .endDate(new Date(2023, 2, 1))
                     .build(),
             BudgetDto.builder()
                     .category(TRANSPORTATION)
                     .amount(BigDecimal.valueOf(400000))
+                    .startDate(new Date(2023, 1, 1))
+                    .endDate(new Date(2023, 2, 1))
                     .build()
     );
     static BudgetSettingRequestDto budgetSettingRequestDto =
@@ -72,6 +81,14 @@ class BudgetSettingTest {
             .password("aaaaa")
             .userStatus(UserStatus.ACTIVE)
             .userRole(UserRole.ROLE_USER)
+            .build();
+
+    static Budget budget = Budget.builder()
+            .id(2L)
+            .category(FOOD)
+            .amount(BigDecimal.valueOf(400000))
+            .startDate(new Date(2023, 1, 31))
+            .endDate(new Date(2023, 2, 10))
             .build();
 
     @Test
@@ -95,7 +112,7 @@ class BudgetSettingTest {
     }
 
     @Test
-    @DisplayName("실패 - 이미 등록시도한 예산이 등록되어 있는 경우")
+    @DisplayName("실패 - 겹치는 날짜에 예산계획이 등록되어 있는 경우")
     public void createBudget_fail_existing_budget() {
         // given
         Long userId = 1L;
@@ -103,15 +120,14 @@ class BudgetSettingTest {
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
         when(budgetRepository.findByUser(user))
-                .thenReturn(Collections.singletonList(new Budget()));
+                .thenReturn(Collections.singletonList(budget));
         when(budgetRepository.findByUserAndCategory(user, FOOD))
-                .thenReturn(Optional.of(new Budget()));
+                .thenReturn(Collections.singletonList(budget));
 
 
         // when&then
         Assertions.assertThatThrownBy(() -> budgetService.createBudget(userId, budgetSettingRequestDto))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.BUDGET_ALREADY_EXISTS.getMessage());
-
     }
 }
