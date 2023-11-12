@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
     List<Budget> findByUser(User user);
 
-    Optional<Budget> findByUserAndCategory(User user, Categories category);
+    List<Budget> findByUserAndCategory(User user, Categories category);
 
     @Query("SELECT SUM(e.amount) FROM Budget e")
     BigDecimal getTotalAmount();

@@ -6,6 +6,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.sql.Date;
 
 @Getter
 @NoArgsConstructor
@@ -27,11 +28,17 @@ public class Budget {
     @Setter
     private BigDecimal amount;
 
+    private Date startDate;
+
+    private Date endDate;
+
     public static Budget from(User user, BudgetDto budgetDto) {
         return Budget.builder()
                 .user(user)
                 .category(budgetDto.getCategory())
                 .amount(budgetDto.getAmount())
+                .startDate(budgetDto.getStartDate())
+                .endDate(budgetDto.getEndDate())
                 .build();
     }
 }
