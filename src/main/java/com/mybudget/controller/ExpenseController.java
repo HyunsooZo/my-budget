@@ -2,17 +2,21 @@ package com.mybudget.controller;
 
 import com.mybudget.config.JwtProvider;
 import com.mybudget.dto.ExpenseCreationRequestDto;
+import com.mybudget.dto.ExpenseListResponseDto;
+import com.mybudget.enums.Categories;
 import com.mybudget.service.ExpenseService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
+import java.sql.Date;
 
-import static org.springframework.http.HttpHeaders.*;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.CREATED;
 
 @RequiredArgsConstructor
@@ -35,5 +39,27 @@ public class ExpenseController {
         expenseService.createExpense(userId, expenseCreationRequestDto);
 
         return ResponseEntity.status(CREATED).build();
+    }
+
+    @GetMapping
+    @ApiOperation(value = "지출 조회", notes = "사용자 본인의 지출을 조회")
+    public ResponseEntity<ExpenseListResponseDto> getExpenses(
+            @RequestParam Date startDate,
+            @RequestParam Date endDate,
+            @RequestParam(required = false) BigDecimal minimumAmount,
+            @RequestParam(required = false) BigDecimal maximumAmount,
+            @RequestParam(required = false) Categories category,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "5") Integer size,
+            @RequestHeader(AUTHORIZATION) String token) {
+
+        Long userId = jwtProvider.getIdFromToken(token);
+
+        ExpenseListResponseDto expenses =
+                expenseService.getExpenses(
+                        userId, startDate, endDate, minimumAmount, maximumAmount, category, page, size
+                );
+
+        return ResponseEntity.status(HttpStatus.OK).body(expenses);
     }
 }

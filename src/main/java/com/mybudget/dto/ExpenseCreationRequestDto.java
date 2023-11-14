@@ -6,7 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.sql.Date;
 
@@ -15,17 +16,18 @@ import java.sql.Date;
 @NoArgsConstructor
 @Builder
 public class ExpenseCreationRequestDto {
-    @NotBlank(message = "지출일을 입력해주세요")
+    @NotNull(message = "지출 날짜를 입력해주세요")
     private Date expenseDate;
 
-    @NotBlank(message = "카테고리를 입력해주세요")
+    @NotNull(message = "카테고리를 입력해주세요")
     private Categories category;
 
-    @NotBlank(message = "금액을 입력해주세요")
+    @NotNull(message = "금액을 입력해주세요")
+    @Positive(message = "금액은 0보다 커야합니다")
     private BigDecimal amount;
 
     private String description;
 
-    @NotBlank(message = "지출 통계 제외 여부를 입력해주세요")
+    @NotNull(message = "지출을 제외할지 여부를 입력해주세요")
     private Boolean excluding;
 }
