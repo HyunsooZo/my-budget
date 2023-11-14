@@ -2,10 +2,7 @@ package com.mybudget.domain;
 
 import com.mybudget.dto.ExpenseCreationRequestDto;
 import com.mybudget.enums.Categories;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -24,14 +21,17 @@ public class Expense extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
+    @Setter
     private String description;
 
     private Categories category;
 
+    @Setter
     private BigDecimal amount;
 
     private Date expenseDate;
 
+    @Setter
     private Boolean excluding;
 
     public static Expense from(User user,
