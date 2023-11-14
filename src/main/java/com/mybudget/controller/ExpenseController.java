@@ -9,7 +9,6 @@ import com.mybudget.service.ExpenseService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +17,7 @@ import java.math.BigDecimal;
 import java.sql.Date;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.*;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/expenses")
@@ -61,7 +60,7 @@ public class ExpenseController {
                         userId, startDate, endDate, minimumAmount, maximumAmount, category, page, size
                 );
 
-        return ResponseEntity.status(HttpStatus.OK).body(expenses);
+        return ResponseEntity.status(OK).body(expenses);
     }
 
     @PatchMapping("/{expenseId}")
@@ -75,6 +74,20 @@ public class ExpenseController {
 
         expenseService.updateExpense(userId, expenseId, expenseModificationRequestDto);
 
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(NO_CONTENT).build();
     }
+
+    @DeleteMapping("/{expenseId}")
+    @ApiOperation(value = "지출 삭제", notes = "사용자 본인의 지출을 삭제")
+    public ResponseEntity<Void> deleteExpense(
+            @RequestHeader(AUTHORIZATION) String token,
+            @PathVariable Long expenseId) {
+
+        Long userId = jwtProvider.getIdFromToken(token);
+
+        expenseService.deleteExpense(userId, expenseId);
+
+        return ResponseEntity.status(NO_CONTENT).build();
+    }
+
 }
