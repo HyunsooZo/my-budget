@@ -2,10 +2,7 @@ package com.mybudget.service;
 
 import com.mybudget.domain.Expense;
 import com.mybudget.domain.User;
-import com.mybudget.dto.AmountsOfCategoryDto;
-import com.mybudget.dto.ExpenseCreationRequestDto;
-import com.mybudget.dto.ExpenseDto;
-import com.mybudget.dto.ExpenseListResponseDto;
+import com.mybudget.dto.*;
 import com.mybudget.enums.Categories;
 import com.mybudget.exception.CustomException;
 import com.mybudget.repository.ExpenseRepository;
@@ -15,14 +12,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.mybudget.exception.ErrorCode.USER_INFO_NOT_FOUND;
+import static com.mybudget.exception.ErrorCode.*;
 
 @RequiredArgsConstructor
 @Service
@@ -69,7 +66,7 @@ public class ExpenseService {
      * @param size          페이지 크기
      * @return 지출 목록과 해당 기간 동안의 카테고리별 지출 금액을 포함한 응답 DTO
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public ExpenseListResponseDto getExpenses(Long userId,
                                               Date startDate,
                                               Date endDate,
@@ -122,4 +119,52 @@ public class ExpenseService {
                 .totalAmount(totalAmount)
                 .build();
     }
+
+    /**
+     * 지출 정보를 업데이트하는 메서드입니다.
+     *
+     * @param userId                        사용자 ID
+     * @param expenseId                     지출 ID
+     * @param expenseModificationRequestDto 지출 수정 요청 DTO 객체
+     */
+    @Transactional
+    public void updateExpense(Long userId,
+                              Long expenseId,
+                              ExpenseModificationRequestDto expenseModificationRequestDto) {
+
+        // 지출 및 사용자 정보 가져오기
+        Expense expense = getExpense(expenseId);
+        User user = getUser(userId);
+
+        // 지출 소유자 확인
+        if (!expense.getUser().equals(user)) {
+            throw new CustomException(NOT_MY_EXPENSE);
+        }
+
+        // 수정 요청에 따라 지출 정보 업데이트
+        if (expenseModificationRequestDto.getDescription() != null) {
+            expense.setDescription(expenseModificationRequestDto.getDescription());
+        }
+
+        if (expenseModificationRequestDto.getAmount() != null) {
+            expense.setAmount(expenseModificationRequestDto.getAmount());
+        }
+
+        if (expenseModificationRequestDto.getExcluding() != null) {
+            expense.setExcluding(expenseModificationRequestDto.getExcluding());
+        }
+    }
+
+    /**
+     * 지정된 ID에 해당하는 지출 정보를 조회하는 메서드입니다.
+     *
+     * @param expenseId 조회할 지출의 ID
+     * @return 조회된 지출 정보
+     * @throws CustomException 지출을 찾을 수 없는 경우 예외 발생
+     */
+    private Expense getExpense(Long expenseId) {
+        return expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new CustomException(EXPENSE_NOT_FOUND));
+    }
+
 }

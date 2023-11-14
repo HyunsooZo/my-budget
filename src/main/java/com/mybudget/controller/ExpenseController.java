@@ -3,6 +3,7 @@ package com.mybudget.controller;
 import com.mybudget.config.JwtProvider;
 import com.mybudget.dto.ExpenseCreationRequestDto;
 import com.mybudget.dto.ExpenseListResponseDto;
+import com.mybudget.dto.ExpenseModificationRequestDto;
 import com.mybudget.enums.Categories;
 import com.mybudget.service.ExpenseService;
 import io.swagger.annotations.Api;
@@ -61,5 +62,19 @@ public class ExpenseController {
                 );
 
         return ResponseEntity.status(HttpStatus.OK).body(expenses);
+    }
+
+    @PatchMapping("/{expenseId}")
+    @ApiOperation(value = "지출 수정", notes = "사용자 본인의 지출을 수정")
+    public ResponseEntity<Void> updateExpense(
+            @RequestHeader(AUTHORIZATION) String token,
+            @PathVariable Long expenseId,
+            @Valid @RequestBody ExpenseModificationRequestDto expenseModificationRequestDto) {
+
+        Long userId = jwtProvider.getIdFromToken(token);
+
+        expenseService.updateExpense(userId, expenseId, expenseModificationRequestDto);
+
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
