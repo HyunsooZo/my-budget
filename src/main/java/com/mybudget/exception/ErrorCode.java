@@ -26,7 +26,9 @@ public enum ErrorCode {
     BUDGET_ALREADY_EXISTS(BAD_REQUEST, "해당 날짜에 이미 등록된 예산이 있습니다. " +
             "기존 예산을 삭제하거나 적용날짜를 변경한 후 다시 시도 해주세요."),
     BUDGET_AMOUNT_TOO_SMALL(BAD_REQUEST, "최소 예산은 1000원 입니다."),
-    INVALID_BUDGET_DATE(BAD_REQUEST,"시작일은 종료일보다 빠를 수 없습니다.");
+    INVALID_BUDGET_DATE(BAD_REQUEST,"시작일은 종료일보다 빠를 수 없습니다."),
+    EXPENSE_NOT_FOUND(BAD_REQUEST,"지출 정보를 찾을 수 없습니다."),
+    NOT_MY_EXPENSE(BAD_REQUEST, "본인의 지출만 수정/삭제할 수 있습니다.");
 
     private final HttpStatus status;
     private final String message;
