@@ -167,4 +167,25 @@ public class ExpenseService {
                 .orElseThrow(() -> new CustomException(EXPENSE_NOT_FOUND));
     }
 
+    /**
+     * 지정된 사용자의 지출을 삭제하는 메서드입니다.
+     *
+     * @param userId    사용자 ID
+     * @param expenseId 삭제할 지출의 ID
+     * @throws CustomException 사용자가 소유한 지출이 아닌 경우 예외를 발생시킵니다.
+     */
+    public void deleteExpense(Long userId, Long expenseId) {
+        // 지출 및 사용자 정보 가져오기
+        Expense expense = getExpense(expenseId);
+        User user = getUser(userId);
+
+        // 소유자 확인 후 삭제
+        if (!expense.getUser().equals(user)) {
+            throw new CustomException(NOT_MY_EXPENSE);
+        }
+
+        // 지출 삭제
+        expenseRepository.delete(expense);
+    }
+
 }
