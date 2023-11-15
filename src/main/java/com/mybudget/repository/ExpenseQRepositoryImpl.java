@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Date;
 import java.util.Arrays;
 import java.util.List;
@@ -257,5 +258,23 @@ public class ExpenseQRepositoryImpl implements ExpenseQRepository {
                 .and(expense.amount.between(constant(minimumAmount), constant(maximumAmount)))
                 .and(expense.category.eq(category))
                 .and(expense.excluding.eq(false));
+    }
+
+    /**
+     * 특정 월의 지출 목록을 가져옵니다.
+     *
+     * @param userId    지출 목록을 가져올 사용자의 ID입니다.
+     * @param firstDate 해당 월의 시작 날짜입니다.
+     * @param lastDate  해당 월의 끝 날짜입니다.
+     * @return 사용자의 특정 월에 대한 지출 목록입니다.
+     */
+    @Override
+    public List<Expense> getExpensesByMonth(Long userId, Date firstDate, Date lastDate) {
+        QExpense expense = QExpense.expense;
+
+        return jpaQueryFactory.selectFrom(expense)
+                .where(expense.user.id.eq(userId)
+                        .and(expense.expenseDate.between(firstDate, lastDate)))
+                .fetch();
     }
 }

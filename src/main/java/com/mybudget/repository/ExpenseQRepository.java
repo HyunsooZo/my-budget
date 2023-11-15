@@ -48,4 +48,9 @@ public interface ExpenseQRepository {
                                                   Categories category,
                                                   BigDecimal minimumAmount,
                                                   BigDecimal maximumAmount);
+
+    List<Expense> getExpensesByMonth(Long userId,
+                                     Date firstDate,
+                                     Date lastDate);
 }
+
