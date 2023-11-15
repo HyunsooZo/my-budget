@@ -5,6 +5,7 @@ import com.mybudget.domain.User;
 import com.mybudget.dto.AmountsOfCategoryDto;
 import com.mybudget.dto.ExpenseListResponseDto;
 import com.mybudget.enums.Categories;
+import com.mybudget.repository.BudgetRepository;
 import com.mybudget.repository.ExpenseRepository;
 import com.mybudget.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,12 +33,17 @@ class ExpenseInquiryTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private BudgetRepository budgetRepository;
+
     private ExpenseService expenseService;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        expenseService = new ExpenseService(expenseRepository, userRepository);
+        expenseService = new ExpenseService(
+                expenseRepository, budgetRepository, userRepository
+        );
     }
 
     @Test

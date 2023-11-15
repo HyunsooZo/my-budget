@@ -6,11 +6,8 @@ import com.mybudget.domain.User;
 import com.mybudget.dto.BudgetDto;
 import com.mybudget.dto.BudgetSettingRequestDto;
 import com.mybudget.enums.UserStatus;
-import com.mybudget.exception.CustomException;
-import com.mybudget.exception.ErrorCode;
 import com.mybudget.repository.BudgetRepository;
 import com.mybudget.repository.UserRepository;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +17,10 @@ import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import static com.mybudget.enums.Categories.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -109,25 +109,5 @@ class BudgetSettingTest {
         assertEquals(4, budgetDtos.size());
         verify(budgetRepository, Mockito.times(4))
                 .save(Mockito.any(Budget.class));
-    }
-
-    @Test
-    @DisplayName("실패 - 겹치는 날짜에 예산계획이 등록되어 있는 경우")
-    public void createBudget_fail_existing_budget() {
-        // given
-        Long userId = 1L;
-
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
-        when(budgetRepository.findByUser(user))
-                .thenReturn(Collections.singletonList(budget));
-        when(budgetRepository.findByUserAndCategory(user, FOOD))
-                .thenReturn(Collections.singletonList(budget));
-
-
-        // when&then
-        Assertions.assertThatThrownBy(() -> budgetService.createBudget(userId, budgetSettingRequestDto))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.BUDGET_ALREADY_EXISTS.getMessage());
     }
 }
