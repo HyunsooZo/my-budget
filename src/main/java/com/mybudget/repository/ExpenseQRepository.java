@@ -62,4 +62,3 @@ public interface ExpenseQRepository {
                                            Date today,
                                            DayOfWeek dayOfWeekOfToday);
 }
-
