@@ -6,7 +6,9 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Date;
+import java.time.DayOfWeek;
 
 @Getter
 @NoArgsConstructor
@@ -33,6 +35,10 @@ public class Expense extends BaseEntity {
 
     private BigDecimal budgetTotalAmount;
 
+    private DayOfWeek dayOfWeek;
+
+    private Double expenseRatio;
+
     @Setter
     private Boolean excluding;
 
@@ -46,6 +52,11 @@ public class Expense extends BaseEntity {
                 .amount(expenseCreationRequestDto.getAmount())
                 .excluding(expenseCreationRequestDto.getExcluding())
                 .expenseDate(expenseCreationRequestDto.getExpenseDate())
+                .dayOfWeek(expenseCreationRequestDto.getExpenseDate().toLocalDate().getDayOfWeek())
+                .expenseRatio(expenseCreationRequestDto.getAmount()
+                        .divide(budgetTotalAmount, 2,
+                                RoundingMode.HALF_UP)
+                        .multiply(new BigDecimal(100)).doubleValue())
                 .budgetTotalAmount(budgetTotalAmount)
                 .build();
     }
