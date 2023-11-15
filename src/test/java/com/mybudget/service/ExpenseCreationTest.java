@@ -4,6 +4,7 @@ import com.mybudget.config.UserRole;
 import com.mybudget.domain.User;
 import com.mybudget.dto.ExpenseCreationRequestDto;
 import com.mybudget.enums.UserStatus;
+import com.mybudget.repository.BudgetRepository;
 import com.mybudget.repository.ExpenseRepository;
 import com.mybudget.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,12 +28,17 @@ class ExpenseCreationTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private BudgetRepository budgetRepository;
+
     private ExpenseService expenseService;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        expenseService = new ExpenseService(expenseRepository, userRepository);
+        expenseService = new ExpenseService(
+                expenseRepository, budgetRepository, userRepository
+        );
     }
 
     static ExpenseCreationRequestDto expenseCreationRequestDto =

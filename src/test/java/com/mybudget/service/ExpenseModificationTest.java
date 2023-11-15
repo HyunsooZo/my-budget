@@ -7,6 +7,7 @@ import com.mybudget.dto.ExpenseModificationRequestDto;
 import com.mybudget.enums.Categories;
 import com.mybudget.enums.UserStatus;
 import com.mybudget.exception.CustomException;
+import com.mybudget.repository.BudgetRepository;
 import com.mybudget.repository.ExpenseRepository;
 import com.mybudget.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,12 +34,17 @@ class ExpenseModificationTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private BudgetRepository budgetRepository;
+
     private ExpenseService expenseService;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        expenseService = new ExpenseService(expenseRepository, userRepository);
+        expenseService = new ExpenseService(
+                expenseRepository, budgetRepository, userRepository
+        );
     }
 
     public static User user = User.builder()
