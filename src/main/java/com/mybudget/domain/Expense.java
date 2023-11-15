@@ -13,7 +13,7 @@ import java.sql.Date;
 @AllArgsConstructor
 @Builder
 @Entity
-public class Expense extends BaseEntity{
+public class Expense extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,11 +31,14 @@ public class Expense extends BaseEntity{
 
     private Date expenseDate;
 
+    private BigDecimal budgetTotalAmount;
+
     @Setter
     private Boolean excluding;
 
     public static Expense from(User user,
-                               ExpenseCreationRequestDto expenseCreationRequestDto) {
+                               ExpenseCreationRequestDto expenseCreationRequestDto,
+                               BigDecimal budgetTotalAmount) {
         return Expense.builder()
                 .user(user)
                 .description(expenseCreationRequestDto.getDescription())
@@ -43,6 +46,7 @@ public class Expense extends BaseEntity{
                 .amount(expenseCreationRequestDto.getAmount())
                 .excluding(expenseCreationRequestDto.getExcluding())
                 .expenseDate(expenseCreationRequestDto.getExpenseDate())
+                .budgetTotalAmount(budgetTotalAmount)
                 .build();
     }
 }

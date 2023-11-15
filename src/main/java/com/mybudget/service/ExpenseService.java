@@ -1,10 +1,12 @@
 package com.mybudget.service;
 
+import com.mybudget.domain.Budget;
 import com.mybudget.domain.Expense;
 import com.mybudget.domain.User;
 import com.mybudget.dto.*;
 import com.mybudget.enums.Categories;
 import com.mybudget.exception.CustomException;
+import com.mybudget.repository.BudgetRepository;
 import com.mybudget.repository.ExpenseRepository;
 import com.mybudget.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ import static com.mybudget.exception.ErrorCode.*;
 @Service
 public class ExpenseService {
     private final ExpenseRepository expenseRepository;
+    private final BudgetRepository budgetRepository;
     private final UserRepository userRepository;
 
     /**
@@ -39,7 +42,18 @@ public class ExpenseService {
 
         User user = getUser(userId);
 
-        expenseRepository.save(Expense.from(user, expenseCreationRequestDto));
+        List<Budget> budgets = budgetRepository.findByUserAndDate(
+                user, expenseCreationRequestDto.getExpenseDate()
+        );
+
+        BigDecimal budgetTotalAmount = budgets.stream()
+                .filter(budget -> budget.getCategory().equals(expenseCreationRequestDto.getCategory()))
+                .map(Budget::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        expenseRepository.save(
+                Expense.from(user, expenseCreationRequestDto, budgetTotalAmount)
+        );
     }
 
     /**
