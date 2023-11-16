@@ -3,7 +3,7 @@ package com.mybudget.repository;
 import com.mybudget.domain.Budget;
 import com.mybudget.domain.User;
 import com.mybudget.enums.Categories;
-import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
