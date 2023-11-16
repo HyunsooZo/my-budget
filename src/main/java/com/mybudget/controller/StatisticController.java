@@ -43,9 +43,16 @@ public class StatisticController {
                         userId, Date.valueOf(LocalDate.now())
                 );
 
-        StatisticByCategoryResponseDto statistics = StatisticByCategoryResponseDto.builder()
-                .ExpenseRatiosPerCategory(categoryStatistics)
-                .build();
+        Double amountStatistics =
+        statisticService.getAmountStatistics(
+                userId, Date.valueOf(LocalDate.now())
+        );
+
+        StatisticByCategoryResponseDto statistics =
+                StatisticByCategoryResponseDto.builder()
+                        .ExpenseRatiosPerCategory(categoryStatistics)
+                        .totalExpenseRatio(amountStatistics)
+                        .build();
 
         return ResponseEntity.status(OK).body(statistics);
     }
@@ -63,4 +70,5 @@ public class StatisticController {
         return ResponseEntity.status(OK)
                 .body(StatisticByDayOfWeekResponseDto.from(dayOfWeekStatistics));
     }
+
 }
