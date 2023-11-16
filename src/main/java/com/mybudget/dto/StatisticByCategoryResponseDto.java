@@ -14,5 +14,6 @@ import java.util.List;
 public class StatisticByCategoryResponseDto {
 
     private List<CategoryExpenseRatioDto> ExpenseRatiosPerCategory;
+    private Double totalExpenseRatio;
 
 }

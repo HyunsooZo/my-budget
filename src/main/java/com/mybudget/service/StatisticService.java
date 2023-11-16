@@ -9,20 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Date;
 import java.time.DayOfWeek;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import javax.transaction.Transactional;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -137,6 +127,26 @@ public class StatisticService {
 
         // 요일별 평균 대비 금일 소비액의 백분율을 계산하여 반환
         return amountOfTodayByDayOfWeek.divide(amountByDayOfWeek, 2, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100)).doubleValue();
+    }
+
+    public Double getAmountStatistics(Long userId, Date today) {
+        Date thisMonthStartDate = Date.valueOf(today.toLocalDate().minusMonths(1));
+        Date lastMonthStartDate = Date.valueOf(today.toLocalDate().minusMonths(2));
+        Date lastMonthEndDate = Date.valueOf(today.toLocalDate().minusMonths(1).minusDays(1));
+
+        BigDecimal thisMonthTotalAmount = expenseRepository.getTotalAmountByPeriod(
+                userId, thisMonthStartDate, today, BigDecimal.ZERO, BigDecimal.valueOf(1000000000)
+        );
+
+        BigDecimal lastMonthTotalAmount = expenseRepository.getTotalAmountByPeriod(
+                userId, lastMonthStartDate, lastMonthEndDate, BigDecimal.ZERO, BigDecimal.valueOf(1000000000)
+        );
+
+        thisMonthTotalAmount = thisMonthTotalAmount == null ? BigDecimal.ONE : thisMonthTotalAmount;
+        lastMonthTotalAmount = lastMonthTotalAmount == null ? BigDecimal.ONE : lastMonthTotalAmount;
+
+        return thisMonthTotalAmount.divide(lastMonthTotalAmount, 2, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100)).doubleValue();
     }
 }

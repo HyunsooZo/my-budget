@@ -42,6 +42,7 @@ class StatisticCategoryTest {
         MockitoAnnotations.initMocks(this);
         statisticService = new StatisticService(expenseRepository, userRepository);
     }
+
     @Test
     @DisplayName("성공 - 카테고리별")
     void testGetCategoryStatistics_success() {
@@ -104,13 +105,21 @@ class StatisticCategoryTest {
                 .thenReturn(lastMonthExpenses);
         when(expenseRepository.getExpensesByMonth(userId, thisMonthStartDate, today))
                 .thenReturn(thisMonthExpenses);
+        when(expenseRepository.getTotalAmountByPeriod(
+                userId, lastMonthStartDate, lastMonthEndDate, BigDecimal.ZERO,
+                BigDecimal.valueOf(1000000000))).thenReturn(BigDecimal.valueOf(6000.00));
+        when(expenseRepository.getTotalAmountByPeriod(
+                userId, thisMonthStartDate, today, BigDecimal.ZERO, BigDecimal.valueOf(1000000000)))
+                .thenReturn(BigDecimal.valueOf(8000.00));
 
         //when
         List<CategoryExpenseRatioDto> result = statisticService.getCategoryStatistics(userId, today);
+        Double totalRatio = statisticService.getAmountStatistics(userId, today);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(2);
         assertThat(result.get(0).getRatio()).isEqualTo(133.00);
+        assertThat(totalRatio).isEqualTo(133);
     }
 }
