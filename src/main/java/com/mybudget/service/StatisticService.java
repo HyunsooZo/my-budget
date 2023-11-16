@@ -7,11 +7,13 @@ import com.mybudget.repository.ExpenseRepository;
 import com.mybudget.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Date;
+import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +31,7 @@ public class StatisticService {
      * @param userId 사용자 식별자
      * @return 통계 응답 DTO
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public List<CategoryExpenseRatioDto> getCategoryStatistics(Long userId, Date today) {
         Date thisMonthStartDate = Date.valueOf(today.toLocalDate().minusMonths(1));
         Date lastMonthStartDate = Date.valueOf(today.toLocalDate().minusMonths(2));
@@ -97,5 +99,35 @@ public class StatisticService {
                         Collectors.reducing(BigDecimal.ZERO, Expense::getAmount, BigDecimal::add)
                         // 각 카테고리별로 지출 합계를 계산하여 맵에 추가
                 ));
+    }
+
+    /**
+     * 사용자의 특정 날짜에 대한 요일별 지출 통계 반환
+     *
+     * @param userId 사용자 ID
+     * @param today  특정 날짜
+     * @return 요일별 지출 통계 (요일평균 대비 금일 소비액의 백분율)
+     */
+    @Transactional(readOnly = true)
+    public Double getDayOfWeekStatistics(Long userId, Date today) {
+
+        // 오늘의 날짜로부터 요일
+        DayOfWeek dayOfWeekOfToday = today.toLocalDate().getDayOfWeek();
+
+        // 해당 요일에 대한 평균 지출액
+        BigDecimal amountByDayOfWeek =
+                expenseRepository.getAmountAverageByDayOfWeek(userId, today, dayOfWeekOfToday);
+
+        // 해당 요일의 금일 지출액
+        BigDecimal amountOfTodayByDayOfWeek =
+                expenseRepository.getAmountOfTodayByDayOfWeek(userId, today, dayOfWeekOfToday);
+
+        // 만약 금일 지출액이 null이면 기본값 1로 설정
+        amountOfTodayByDayOfWeek = amountOfTodayByDayOfWeek == null ?
+                BigDecimal.ONE : amountOfTodayByDayOfWeek;
+
+        // 요일별 평균 대비 금일 소비액의 백분율을 계산하여 반환
+        return amountOfTodayByDayOfWeek.divide(amountByDayOfWeek, 2, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100)).doubleValue();
     }
 }

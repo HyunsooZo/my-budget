@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Date;
+import java.time.DayOfWeek;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -276,5 +277,81 @@ public class ExpenseQRepositoryImpl implements ExpenseQRepository {
                 .where(expense.user.id.eq(userId)
                         .and(expense.expenseDate.between(firstDate, lastDate)))
                 .fetch();
+    }
+
+    /**
+     * 종료일 이전까지의 해당 요일에 대한 지출 평균을 계산합니다.
+     *
+     * @param userId    사용자 ID
+     * @param endDate   종료일
+     * @param dayOfWeek 해당 요일
+     * @return 종료일 이전까지의 해당 요일에 대한 지출 평균
+     */
+    @Override
+    public BigDecimal getAmountAverageByDayOfWeek(Long userId, Date endDate, DayOfWeek dayOfWeek) {
+        QExpense expense = QExpense.expense;
+
+        // 종료일 이전까지의 해당 요일에 대한 총 지출액
+        BigDecimal totalAmount = jpaQueryFactory.select(expense.amount.sum())
+                .from(expense)
+                .where(expense.user.id.eq(userId)
+                        .and(expense.expenseDate.before(endDate)) // 종료일 이전
+                        .and(expense.dayOfWeek.eq(dayOfWeek)))   // 해당 요일
+                .fetchOne();
+
+        // 종료일까지의 해당 요일에 대한 지출 건수
+        Long count = jpaQueryFactory.select(expense.count())
+                .from(expense)
+                .where(expense.user.id.eq(userId)
+                        .and(expense.expenseDate.before(endDate)) // 종료일 이전
+                        .and(expense.dayOfWeek.eq(dayOfWeek)))   // 해당 요일
+                .fetchOne();
+
+        // 평균 계산: 총액 / 건수
+        if (count != null && count != 0) {
+            return totalAmount != null ?
+                    totalAmount.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP) :
+                    BigDecimal.ONE; // totalAmount이 null인 경우 기본값 1 반환
+        } else {
+            return BigDecimal.ONE; // count가 null이거나 0인 경우 기본값 1 반환
+        }
+    }
+
+    /**
+     * 오늘의 특정 요일에 대한 지출을 계산합니다.
+     *
+     * @param userId           사용자 ID
+     * @param today            오늘의 날짜
+     * @param dayOfWeekOfToday 오늘의 요일
+     * @return 오늘의 특정 요일에 대한 지출
+     */
+    @Override
+    public BigDecimal getAmountOfTodayByDayOfWeek(Long userId,
+                                                  Date today,
+                                                  DayOfWeek dayOfWeekOfToday) {
+        QExpense expense = QExpense.expense;
+
+        BigDecimal sum = jpaQueryFactory.select(expense.amount.sum())
+                .from(expense)
+                .where(expense.user.id.eq(userId)
+                        .and(expense.expenseDate.eq(today))        // 오늘의 날짜
+                        .and(expense.dayOfWeek.eq(dayOfWeekOfToday))) // 오늘의 요일
+                .fetchOne();
+
+        Long count = jpaQueryFactory.select(expense.count())
+                .from(expense)
+                .where(expense.user.id.eq(userId)
+                        .and(expense.expenseDate.eq(today))        // 오늘의 날짜
+                        .and(expense.dayOfWeek.eq(dayOfWeekOfToday))) // 오늘의 요일
+                .fetchOne();
+
+        // 평균 계산: 총액 / 건수
+        if (count != null && count != 0) {
+            return sum != null ?
+                    sum.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP) :
+                    BigDecimal.ONE; // sum이 null인 경우 기본값 1 반환
+        } else {
+            return BigDecimal.ONE; // count가 null이거나 0인 경우 기본값 1 반환
+        }
     }
 }

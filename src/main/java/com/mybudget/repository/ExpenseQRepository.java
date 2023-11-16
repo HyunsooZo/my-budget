@@ -6,6 +6,7 @@ import com.mybudget.enums.Categories;
 
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.time.DayOfWeek;
 import java.util.List;
 
 public interface ExpenseQRepository {
@@ -52,5 +53,13 @@ public interface ExpenseQRepository {
     List<Expense> getExpensesByMonth(Long userId,
                                      Date firstDate,
                                      Date lastDate);
+
+    BigDecimal getAmountAverageByDayOfWeek(Long userId,
+                                           Date endDate,
+                                           DayOfWeek dayOfWeek);
+
+    BigDecimal getAmountOfTodayByDayOfWeek(Long userId,
+                                           Date today,
+                                           DayOfWeek dayOfWeekOfToday);
 }
 

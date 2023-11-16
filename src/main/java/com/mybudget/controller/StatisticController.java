@@ -3,6 +3,7 @@ package com.mybudget.controller;
 import com.mybudget.config.JwtProvider;
 import com.mybudget.dto.CategoryExpenseRatioDto;
 import com.mybudget.dto.StatisticByCategoryResponseDto;
+import com.mybudget.dto.StatisticByDayOfWeekResponseDto;
 import com.mybudget.service.StatisticService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -29,7 +30,7 @@ public class StatisticController {
     private final StatisticService statisticService;
     private final JwtProvider jwtProvider;
 
-    @GetMapping
+    @GetMapping("/category")
     @ApiOperation(value = "통계 조회", notes = "통계를 조회")
     public ResponseEntity<StatisticByCategoryResponseDto> getStatistics(
             @RequestHeader(AUTHORIZATION) String token) {
@@ -47,5 +48,19 @@ public class StatisticController {
                 .build();
 
         return ResponseEntity.status(OK).body(statistics);
+    }
+
+    @GetMapping("/day-of-week")
+    @ApiOperation(value = "지난요일 대비 통계 조회", notes = "지난요일 대비 통계를 조회")
+    public ResponseEntity<StatisticByDayOfWeekResponseDto> getStatisticsByDayOfWeek(
+            @RequestHeader(AUTHORIZATION) String token) {
+
+        Long userId = jwtProvider.getIdFromToken(token);
+
+        Double dayOfWeekStatistics =
+                statisticService.getDayOfWeekStatistics(userId, Date.valueOf(LocalDate.now()));
+
+        return ResponseEntity.status(OK)
+                .body(StatisticByDayOfWeekResponseDto.from(dayOfWeekStatistics));
     }
 }
