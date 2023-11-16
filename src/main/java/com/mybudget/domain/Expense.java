@@ -35,6 +35,7 @@ public class Expense extends BaseEntity {
 
     private BigDecimal budgetTotalAmount;
 
+    @Enumerated(EnumType.STRING)
     private DayOfWeek dayOfWeek;
 
     private Double expenseRatio;
