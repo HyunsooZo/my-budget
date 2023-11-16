@@ -8,14 +8,19 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '2.7.17'
     id 'io.spring.dependency-management' version '1.0.15.RELEASE'
-    id 'com.ewerk.gradle.plugins.querydsl' version '1.0.10'
 }
 
 group = 'com'
 version = '0.0.1-SNAPSHOT'
 
 java {
-    sourceCompatibility = '1.8'
+    sourceCompatibility = '9'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
@@ -52,6 +57,9 @@ dependencies {
     //query-dsl
     implementation "com.querydsl:querydsl-jpa:${queryDslVersion}"
     implementation "com.querydsl:querydsl-apt:${queryDslVersion}"
+    annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jpa"
+    annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+    annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
     //httpclient
     implementation 'org.apache.httpcomponents:httpclient:4.5.13'
     //mail-sender
@@ -59,46 +67,11 @@ dependencies {
 
 }
 
-def querydslSrcDir = 'src/main/generated'
-sourceSets {
-    main {
-        java {
-            srcDirs += [querydslSrcDir]
-        }
-    }
-}
+def generatedDir =  "$buildDir/main/generated"
 
 tasks.named('test') {
     useJUnitPlatform()
 }
-
-jar {
-    enabled = false
-}
-
-// querydsl에서 사용할 경로 설정(현재 지정한 부분은 .gitignore에 포함됨)
-def querydslDir = "$buildDir/generated/querydsl"
-
-// JPA 사용 여부 및 사용할 경로 설정
-querydsl {
-    jpa = true
-    querydslSourcesDir = querydslDir
-}
-
-// build 시 사용할 sourceSet 추가 설정
-sourceSets {
-    main.java.srcDir querydslDir
-}
-
-// querydsl 컴파일 시 사용할 옵션 설정
-compileQuerydsl{
-    options.annotationProcessorPath = configurations.querydsl
-}
-
-// querydsl이 compileClassPath를 상속하도록 설정
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
-    querydsl.extendsFrom compileClasspath
+clean {
+    delete file(generatedDir)
 }
