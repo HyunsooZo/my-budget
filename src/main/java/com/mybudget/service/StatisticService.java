@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Date;
+import java.text.DecimalFormat;
 import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.List;
@@ -130,6 +131,14 @@ public class StatisticService {
                 .multiply(BigDecimal.valueOf(100)).doubleValue();
     }
 
+    /**
+     * 주어진 사용자 ID 및 현재 일자를 기준으로 이번 달 지출 비율과 지난 달 지출 비율을 비교, 반환
+     * 이번 달 지출 비율을 지난 달 지출 비율로 나눈 후 백분율로 변환하여 반환
+     *
+     * @param userId 사용자 ID
+     * @param today 현재 일자
+     * @return 이번 달 지출 비율을 지난 달 지출 비율로 나눈 백분율 값
+     */
     public Double getAmountStatistics(Long userId, Date today) {
         Date thisMonthStartDate = Date.valueOf(today.toLocalDate().minusMonths(1));
         Date lastMonthStartDate = Date.valueOf(today.toLocalDate().minusMonths(2));
@@ -149,4 +158,38 @@ public class StatisticService {
         return thisMonthTotalAmount.divide(lastMonthTotalAmount, 2, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100)).doubleValue();
     }
+
+    /**
+     * 주어진 사용자 ID와 날짜를 기준으로 다른 사용자들의 지출 비율과 해당 사용자의 지출 비율 계산,
+     * 다른 사용자들의 평균 지출 비율 대비 해당 사용자의 지출 비율의 비율 반환
+     * @param userId 사용자 ID
+     * @param date 날짜
+     * @return 다른 사용자들의 평균 지출 비율 대비 해당 사용자의 지출 비율의 비율 값 (소수점 한 자리까지)
+     */
+    public Double getOthersStatistics(Long userId, Date date) {
+        List<Expense> allExpenses = expenseRepository.findAll();
+
+        Double othersExpenseRatio = allExpenses.stream()
+                .filter(expense -> !expense.getUser().getId().equals(userId))
+                .filter(expense -> expense.getExpenseDate().equals(date))
+                .filter(expense -> expense.getExcluding().equals(false))
+                .mapToDouble(Expense::getExpenseRatio)
+                .average()
+                .orElse(100.0);
+
+        Double myExpenseRatio = allExpenses.stream()
+                .filter(expense -> expense.getUser().getId().equals(userId))
+                .filter(expense -> expense.getExpenseDate().equals(date))
+                .filter(expense -> expense.getExcluding().equals(false))
+                .mapToDouble(Expense::getExpenseRatio)
+                .average()
+                .orElse(1.0);
+
+        DecimalFormat format = new DecimalFormat("#.#");
+
+        return Double.parseDouble(format.format(
+                myExpenseRatio / othersExpenseRatio * 100)
+        );
+    }
+  
 }
