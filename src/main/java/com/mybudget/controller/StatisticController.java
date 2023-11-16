@@ -2,6 +2,7 @@ package com.mybudget.controller;
 
 import com.mybudget.config.JwtProvider;
 import com.mybudget.dto.CategoryExpenseRatioDto;
+import com.mybudget.dto.StatisticsCompareToOthersResponseDto;
 import com.mybudget.dto.StatisticByCategoryResponseDto;
 import com.mybudget.dto.StatisticByDayOfWeekResponseDto;
 import com.mybudget.service.StatisticService;
@@ -69,6 +70,24 @@ public class StatisticController {
 
         return ResponseEntity.status(OK)
                 .body(StatisticByDayOfWeekResponseDto.from(dayOfWeekStatistics));
+    }
+
+    @GetMapping("/other-users")
+    @ApiOperation(value = "다른 사용자 통계 조회", notes = "다른 사용자 통계를 조회")
+    public ResponseEntity<StatisticsCompareToOthersResponseDto> getStatisticsCompareToOthers(
+            @RequestHeader(AUTHORIZATION) String token) {
+
+        Long userId = jwtProvider.getIdFromToken(token);
+
+        Double ratioCompareToOthers =
+                statisticService.getOthersStatistics(userId, Date.valueOf(LocalDate.now()));
+
+        return ResponseEntity.status(OK)
+                .body(
+                        StatisticsCompareToOthersResponseDto.builder()
+                                .ratioCompareToOthers(ratioCompareToOthers)
+                                .build()
+                );
     }
 
 }
