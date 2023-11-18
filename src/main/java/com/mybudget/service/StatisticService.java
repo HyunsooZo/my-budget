@@ -191,5 +191,5 @@ public class StatisticService {
                 myExpenseRatio / othersExpenseRatio * 100)
         );
     }
-  
+
 }

@@ -10,6 +10,7 @@ import com.mybudget.repository.BudgetRepository;
 import com.mybudget.repository.ExpenseRepository;
 import com.mybudget.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -17,12 +18,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Date;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.mybudget.exception.ErrorCode.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ExpenseService {
@@ -188,6 +196,7 @@ public class ExpenseService {
      * @param expenseId 삭제할 지출의 ID
      * @throws CustomException 사용자가 소유한 지출이 아닌 경우 예외를 발생시킵니다.
      */
+    @Transactional
     public void deleteExpense(Long userId, Long expenseId) {
         // 지출 및 사용자 정보 가져오기
         Expense expense = getExpense(expenseId);
@@ -202,4 +211,67 @@ public class ExpenseService {
         expenseRepository.delete(expense);
     }
 
+    /**
+     * 이 메서드는 오늘의 지출 내역을 조회하고, 사용자별로 예상 소비 금액에 대한 알림을 제공합니다.
+     * 사용자 목록을 가져온 후 각 사용자에 대해 오늘의 지출 내역을 확인하고,
+     * 예상 소비 금액 대비 실제 소비 금액의 비율을 계산하여 알림을 보냅니다.
+     * 프로젝트 기간이 매우짧은 프로젝트인 관계로 로그로 알림을 대체하였습니다.
+     *
+     * @Transactional(readOnly = true)으로 선언되었으며, 읽기 전용 트랜잭션으로 동작합니다.
+     */
+    @Transactional(readOnly = true)
+    public void notifyTodayExpense() {
+        // 사용자 목록 조회
+        List<User> users = userRepository.findAll();
+
+        // 카테고리별 지출 내역을 저장하는 맵
+        Map<Categories, BigDecimal> categoriesBigDecimalMap = new HashMap<>();
+
+        // 오늘 지출 내역 여부를 확인하는 AtomicBoolean
+        AtomicBoolean noExpenseToday = new AtomicBoolean(true);
+
+        // 각 사용자에 대해 지출 내역을 확인하고 맵에 저장
+        users.forEach(user -> {
+            // 오늘의 지출 내역을 가져와 맵에 추가
+            expenseRepository.getExpensesByPeriod(
+                    user.getId(),
+                    Date.valueOf(LocalDate.now()),
+                    Date.valueOf(LocalDate.now()),
+                    BigDecimal.ZERO,
+                    BigDecimal.valueOf(1000000000L)
+            ).forEach(expense -> {
+                categoriesBigDecimalMap.put(
+                        expense.getCategory(),
+                        categoriesBigDecimalMap.getOrDefault(
+                                expense.getCategory(), BigDecimal.ZERO
+                        ).add(expense.getAmount())
+                );
+            });
+
+            // 각 카테고리별 지출 금액을 계산하고 지출이 있을 경우 정보를 로깅하고 플래그를 설정
+            AtomicReference<BigDecimal> totalAmount = new AtomicReference<>(BigDecimal.ZERO);
+            categoriesBigDecimalMap.keySet().forEach(categories -> {
+                if (categoriesBigDecimalMap.get(categories).compareTo(BigDecimal.ZERO) > 0) {
+                    log.info(user.getEmail() + "님의 " +
+                            categories + " 카테고리 지출 금액은 " +
+                            categoriesBigDecimalMap.get(categories) + "원 입니다.");
+                    totalAmount.set(totalAmount.get().add(categoriesBigDecimalMap.get(categories)));
+                    noExpenseToday.set(false);
+                }
+            });
+
+            // 오늘 지출 내역이 있을 경우 예상 소비 금액 대비 실제 소비 금액의 비율 계산 후 알림
+            if (!noExpenseToday.get()) {
+                BigDecimal expectedAmount = budgetRepository.findByUserAndDate(user,
+                                Date.valueOf(LocalDate.now()))
+                        .stream().map(Budget::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal expectedExpense = expectedAmount.divide(BigDecimal.valueOf(30), 2, RoundingMode.HALF_UP);
+                BigDecimal ratio = totalAmount.get().divide(expectedExpense, 2,
+                        RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100));
+                log.info(user.getEmail() + "님의 오늘 예상 소비 금액은 " + expectedExpense +
+                        "원 이었습니다. 금일 실제 소비금액은 " + totalAmount + "원 입니다. " +
+                        "예상 소비금액 대비" + ratio + "% 지출했습니다.");
+            }
+        });
+    }
 }
