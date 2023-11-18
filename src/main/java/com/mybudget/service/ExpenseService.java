@@ -21,6 +21,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -274,4 +276,84 @@ public class ExpenseService {
             }
         });
     }
+    /**
+     * 이 메서드는 사용자에게 추천할 예상 지출을 계산하고, 각 카테고리에 대한 추천 금액 제공
+     * @Transactional(readOnly = true)로 선언되어 읽기 전용 트랜잭션으로 동작
+     */
+    @Transactional(readOnly = true)
+    public void recommendExpenses() {
+        // 사용자 목록 조회
+        List<User> users = userRepository.findAll();
+
+        // 카테고리별 지출 내역을 저장하는 맵
+        Map<Categories, BigDecimal> categoriesBigDecimalMap = new HashMap<>();
+
+        // 시작일을 추적하는 변수
+        AtomicReference<Date> startDate = new AtomicReference<>(null); // 초기값을 null로 설정
+
+        // 각 사용자에 대해 추천 지출 계산
+        users.forEach(user -> {
+            // 해당 사용자의 예산 가져오기
+            budgetRepository.findByUserAndDate(user, Date.valueOf(LocalDate.now()))
+                    .forEach(budget -> {
+                        // 카테고리별 지출 내역 계산
+                        categoriesBigDecimalMap.put(
+                                budget.getCategory(),
+                                categoriesBigDecimalMap.getOrDefault(
+                                        budget.getCategory(), BigDecimal.ZERO
+                                ).add(budget.getAmount())
+                        );
+
+                        // 시작일 업데이트
+                        Date budgetStartDate = budget.getStartDate();
+                        if (startDate.get() == null ||
+                                (budgetStartDate != null &&
+                                        budgetStartDate.before(startDate.get()))) {
+                            startDate.set(budgetStartDate);
+                        }
+                    });
+
+            // startDate가 null이면 현재 날짜로 설정
+            if (startDate.get() == null) {
+                startDate.set(Date.valueOf(LocalDate.now()));
+            }
+
+            // 이번 달의 마지막 날짜 계산
+            LocalDate lastDate = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+            long daysLeftInThisMonth = ChronoUnit.DAYS.between(LocalDate.now(), lastDate) + 1;
+
+            // 사용자의 오늘의 지출 내역 조회하여 카테고리별 지출 내역 갱신
+            expenseRepository.getExpensesByPeriod(
+                    user.getId(),
+                    Date.valueOf(LocalDate.now()),
+                    Date.valueOf(LocalDate.now()),
+                    BigDecimal.ZERO,
+                    BigDecimal.valueOf(1000000000L)
+            ).forEach(expense -> {
+                categoriesBigDecimalMap.put(
+                        expense.getCategory(),
+                        categoriesBigDecimalMap.getOrDefault(
+                                expense.getCategory(), BigDecimal.ZERO
+                        ).subtract(expense.getAmount())
+                );
+            });
+
+            // 카테고리별 추천 금액 계산
+            AtomicReference<BigDecimal> totalRecommendationAmount = new AtomicReference<>(BigDecimal.ZERO);
+            categoriesBigDecimalMap.forEach((category, amount) -> {
+                if (amount.compareTo(BigDecimal.ZERO) < 0) {
+                    amount = BigDecimal.valueOf(1000);
+                }
+                BigDecimal dividedAmount = amount.divide(BigDecimal.valueOf(daysLeftInThisMonth), 2,
+                        RoundingMode.HALF_UP);
+                log.info(user.getEmail() + "님, " + category +
+                        " 카테고리 추천 금액은 " + dividedAmount + "원 입니다.");
+                totalRecommendationAmount.set(totalRecommendationAmount.get().add(dividedAmount));
+            });
+
+            // 사용자의 총 추천 소비 금액 로깅
+            log.info(user.getEmail() + "총 추천 소비금액은 " + totalRecommendationAmount + "원입니다.");
+        });
+    }
+
 }
