@@ -31,4 +31,5 @@ public class CronScheduler {
     public void recommendDailyExpenses() {
         expenseService.recommendExpenses();
     }
+
 }
