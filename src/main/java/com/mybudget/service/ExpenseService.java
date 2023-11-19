@@ -58,7 +58,7 @@ public class ExpenseService {
         BigDecimal budgetTotalAmount = budgets.stream()
                 .filter(budget -> budget.getCategory().equals(expenseCreationRequestDto.getCategory()))
                 .map(Budget::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ONE, BigDecimal::add);
 
         expenseRepository.save(
                 Expense.from(user, expenseCreationRequestDto, budgetTotalAmount)
