@@ -11,6 +11,9 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BudgetSettingRequestDto {
-    List<BudgetDto> budgets;
+public class StatisticByCategoryResponseDto {
+
+    private List<CategoryExpenseRatioDto> ExpenseRatiosPerCategory;
+    private Double totalExpenseRatio;
+
 }

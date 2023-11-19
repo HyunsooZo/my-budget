@@ -5,12 +5,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.math.BigDecimal;
 
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BudgetSettingRequestDto {
-    List<BudgetDto> budgets;
+public class BudgetEditRequestDto {
+    private BigDecimal amount;
 }
