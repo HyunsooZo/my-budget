@@ -8,6 +8,7 @@
 - [구현 기능](#구현기능)
 - [시스템 구성도](#시스템-구성도)
 - [ERD](#ERD)
+- [배포 스크린샷](#배포)
 
 ## 개요
 
@@ -40,7 +41,7 @@
 
 ## API 명세
 
-[![Swagger](https://img.shields.io/badge/swagger_문서로_이동(클릭)-85EA2D.svg?style=for-the-badge&logo=swagger&logoColor=white)](http://13.209.237.7/swagger-ui/index.html)
+[![Swagger](https://img.shields.io/badge/swagger_문서로_이동(클릭)-85EA2D.svg?style=for-the-badge&logo=swagger&logoColor=white)](http://13.209.237.7:8080/swagger-ui/index.html)
 
 | Category     | HTTP Method | Endpoint                                        | Description               |
 |--------------|-------------|-------------------------------------------------|---------------------------|
@@ -136,3 +137,15 @@
 ![structure](./readme_source/structure.png)
 ## ERD
 ![erd](./readme_source/erd.png)
+## 배포
+#### EC2
+![ec2](./readme_source/ec2.png)
+#### RDS
+![rds](./readme_source/rds.png)
+#### Jenkins 
+![cicd](./readme_source/cicd.png)
+#### Docker
+![docker](./readme_source/status.png)
+#### Swagger
+![swagger](./readme_source/swagger.png)
+
